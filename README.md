@@ -1,4 +1,8 @@
-\## Arquitetura 
+
+
+
+
+## Arquitetura 
 
 
 
@@ -6,25 +10,25 @@ Use um projeto standalone no Apps Script com três camadas: dados em Google Shee
 
 
 
-\## Fluxo operacional
+## Fluxo operacional
 
 
 
-1\. `time-driven` diário ou a cada 6 horas para gerar recomendações em lote pequeno.  
+1. `time-driven` diário ou a cada 6 horas para gerar recomendações em lote pequeno.  
 
-2\. `onEdit` na planilha para registrar preferências, assinatura e feedback do usuário.  
+2. `onEdit` na planilha para registrar preferências, assinatura e feedback do usuário.  
 
-3\. `onFormSubmit` se você optar por cadastro via Google Forms.  
+3. `onFormSubmit` se você optar por cadastro via Google Forms.  
 
-4\. `doGet`/`doPost` apenas se a interface precisar de Web App, mas sem depender disso para automação principal.  
-
-
-
-A ideia é evitar polling pesado e recalcular somente quando houver mudança ou em janelas fixas, para não estourar runtime nem URL Fetch. \[developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+4. `doGet`/`doPost` apenas se a interface precisar de Web App, mas sem depender disso para automação principal.  
 
 
 
-\## Modelagem em texto puro
+A ideia é evitar polling pesado e recalcular somente quando houver mudança ou em janelas fixas, para não estourar runtime nem URL Fetch. [developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+
+
+
+## Modelagem em texto puro
 
 
 
@@ -32,21 +36,21 @@ Tudo pode ficar em Sheets, com abas simples:
 
 
 
-\- `Usuarios`: id, email, nome, plataformas\_assinadas, budget, tempo\_disponivel, genero\_favorito, sensibilidade\_tematica.  
+- `Usuarios`: id, email, nome, plataformas_assinadas, budget, tempo_disponivel, genero_favorito, sensibilidade_tematica.  
 
-\- `Catalogo`: id\_filme, titulo, duracao, genero, tema\_textual, plataforma, custo\_extra, descricao\_curta.  
+- `Catalogo`: id_filme, titulo, duracao, genero, tema_textual, plataforma, custo_extra, descricao_curta.  
 
-\- `Historico`: user\_id, id\_filme, data, nota, status.  
+- `Historico`: user_id, id_filme, data, nota, status.  
 
-\- `Recomendacoes`: user\_id, data, lista\_texto, justificativa\_texto, custo\_estimado, alternancia\_texto.  
-
-
-
-Como você pediu texto plano inclusive na autenticação, a chamada à Gemini pode usar uma chave armazenada em `PropertiesService` e enviada em header ou querystring conforme o endpoint usado, sem interface visual nem OAuth interativo no fluxo de negócio. \[developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+- `Recomendacoes`: user_id, data, lista_texto, justificativa_texto, custo_estimado, alternancia_texto.  
 
 
 
-\## Estratégia de recomendação
+Como você pediu texto plano inclusive na autenticação, a chamada à Gemini pode usar uma chave armazenada em `PropertiesService` e enviada em header ou querystring conforme o endpoint usado, sem interface visual nem OAuth interativo no fluxo de negócio. [developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+
+
+
+## Estratégia de recomendação
 
 
 
@@ -54,27 +58,27 @@ A lógica deve ser híbrida: regra determinística para alternar plataformas e G
 
 
 
-Um score simples funciona bem no free tier: `score = afinidade\_temática - penalidade\_custo + bônus\_alternância`. Assim você mantém a “fronteira dos sentidos” como coerência estética, mas força troca de plataforma quando houver equivalência razoável entre opções. \[developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+Um score simples funciona bem no free tier: `score = afinidade_temática - penalidade_custo + bônus_alternância`. Assim você mantém a “fronteira dos sentidos” como coerência estética, mas força troca de plataforma quando houver equivalência razoável entre opções. [developers.google](https://developers.google.com/apps-script/guides/services/quotas)
 
 
 
-\## Gatilhos recomendados
+## Gatilhos recomendados
 
 
 
-\- `onEdit`: atualiza perfil e feedback imediatamente.  
+- `onEdit`: atualiza perfil e feedback imediatamente.  
 
-\- `time-driven` 1x por dia: recalcula recomendações para todos os usuários ativos.  
+- `time-driven` 1x por dia: recalcula recomendações para todos os usuários ativos.  
 
-\- `time-driven` a cada 6 horas: apenas para usuários com alta atividade ou fila pequena.  
-
-
-
-Como o runtime total de triggers no free tier é 90 minutos por dia, o melhor é processar em lotes pequenos, com `PropertiesService` guardando cursor de execução para continuar no próximo disparo. \[developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+- `time-driven` a cada 6 horas: apenas para usuários com alta atividade ou fila pequena.  
 
 
 
-\## Autenticação em texto plano
+Como o runtime total de triggers no free tier é 90 minutos por dia, o melhor é processar em lotes pequenos, com `PropertiesService` guardando cursor de execução para continuar no próximo disparo. [developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+
+
+
+## Autenticação em texto plano
 
 
 
@@ -82,7 +86,7 @@ Se a exigência é “tudo em texto plano”, mantenha apenas uma chave simples 
 
 
 
-\## Limites práticos do free tier
+## Limites práticos do free tier
 
 
 
@@ -90,33 +94,33 @@ Para não estourar o plano gratuito:
 
 
 
-\- manter execuções abaixo de 6 minutos cada.  
+- manter execuções abaixo de 6 minutos cada.  
 
-\- limitar chamadas Gemini a poucas por lote, idealmente uma por usuário por ciclo.  
+- limitar chamadas Gemini a poucas por lote, idealmente uma por usuário por ciclo.  
 
-\- usar texto curto nos prompts e respostas.  
+- usar texto curto nos prompts e respostas.  
 
-\- evitar reprocessar catálogo inteiro sempre; atualizar só incrementos.  
-
-
-
-Os limites oficiais do Apps Script incluem 6 min por execução, 20 triggers por usuário/projeto e 20.000 URL Fetch/dia; triggers também entram no teto de 90 min/dia no consumer account. \[developers.google](https://developers.google.com/apps-script/guides/services/quotas)
+- evitar reprocessar catálogo inteiro sempre; atualizar só incrementos.  
 
 
 
-\## Estrutura mínima sugerida
+Os limites oficiais do Apps Script incluem 6 min por execução, 20 triggers por usuário/projeto e 20.000 URL Fetch/dia; triggers também entram no teto de 90 min/dia no consumer account. [developers.google](https://developers.google.com/apps-script/guides/services/quotas)
 
 
 
-\- `Config.gs`: constantes, chaves e parâmetros.  
+## Estrutura mínima sugerida
 
-\- `Data.gs`: leitura e escrita nas abas.  
 
-\- `Recommender.gs`: score, alternância e montagem da sequência.  
 
-\- `Gemini.gs`: chamada textual e parsing da resposta.  
+- `Config.gs`: constantes, chaves e parâmetros.  
 
-\- `Triggers.gs`: criação e manutenção dos gatilhos nativos.  
+- `Data.gs`: leitura e escrita nas abas.  
+
+- `Recommender.gs`: score, alternância e montagem da sequência.  
+
+- `Gemini.gs`: chamada textual e parsing da resposta.  
+
+- `Triggers.gs`: criação e manutenção dos gatilhos nativos.  
 
 
 
