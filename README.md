@@ -2,14 +2,6 @@
 
 
 
-## Arquitetura 
-
-
-
-Use um projeto standalone no Apps Script com três camadas: dados em Google Sheets, orquestração por triggers e geração textual pela Gemini via `UrlFetchApp` . Os gatilhos nativos devem ser apenas `time-driven` e `onEdit`/`onFormSubmit` quando necessário, porque triggers instaláveis rodam sob a conta do criador e podem ser gerenciados programaticamente no GAS .  
-
-
-
 ## Fluxo operacional
 
 
